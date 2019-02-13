@@ -1,25 +1,66 @@
 __author__ = 'igor'
 from Tkinter import *
+import random
+
 master = Tk()
 
+#aesth
 triangle_size = 0.1
+Width = 10
+(x, y) = (50, 50)
+board = Canvas(master, width=x*Width, height=y*Width)
+#difficulty
+difficulty = 2
+walls_number = int(x*difficulty)
+
+#rewards
 cell_score_min = -0.2
 cell_score_max = 0.2
-Width = 100
-(x, y) = (5, 5)
-actions = ["up", "down", "left", "right"]
+walk_rewards = -0.04
 
-board = Canvas(master, width=x*Width, height=y*Width)
-player = (0, y-1)
+#initial conditions
+def random_start():
+    return(random.randrange(2,y-2),random.randrange(2,y-2))
+player = random_start()
+
 score = 1
 restart = False
+#rewards
+cell_score_min = -0.2
+cell_score_max = 0.2
 walk_reward = -0.04
 
-walls = [(1, 1), (1, 2), (2, 1), (2, 2)]
-specials = [(4, 1, "red", -1), (4, 0, "green", 1)]
+actions = ["up", "down", "left", "right"]
+
+#square func
+def create_walls(walls, x=x, y=y):
+    wall_list = [(random.randrange(4,x), random.randrange(4,y)) for i in range(0, walls)]
+
+    if (0,0) in wall_list: #remove origin
+        wall_list.remove((0,0))
+
+    return(wall_list)
+
+def create_reds(x=x, y=y):
+    wall_list = []
+
+    wall_list += [(x-1, i,"red", -1) for i in range(0,y)] #right
+    wall_list += [(0, i, "red", -1) for i in range(2,y)] #left 
+    wall_list += [(i,0,"red", -1) for i in range (2,x)] #top
+    wall_list += [(i, y-1, "red", -1) for i in range(0,x)] #bottom
+
+    return(wall_list)
+
+def create_greens():
+    greens = [(0,0,"green",1), (1,0,"green",1),(0,1,"green",1)]
+
+    return(greens)
+
+specials = [] + create_greens() + create_reds() #x, y, color, score
+walls = create_walls(walls_number) #how many random walls?
 cell_scores = {}
 
-
+#board visuals
 def create_triangle(i, j, action):
     if action == actions[0]:
         return board.create_polygon((i+0.5-triangle_size)*Width, (j+triangle_size)*Width,
@@ -59,7 +100,7 @@ def render_grid():
 
 render_grid()
 
-
+#scoring
 def set_cell_score(state, action, val):
     global cell_score_min, cell_score_max
     triangle = cell_scores[state][action]
@@ -73,7 +114,7 @@ def set_cell_score(state, action, val):
     color = "#" + red + green + "00"
     board.itemconfigure(triangle, fill=color)
 
-
+#moving
 def try_move(dx, dy):
     global player, x, y, score, walk_reward, me, restart
     if restart == True:
@@ -89,14 +130,14 @@ def try_move(dx, dy):
             score -= walk_reward
             score += w
             if score > 0:
-                print "Success! score: ", score
+                print "\n Success! | Score: ", score
             else:
-                print "Fail! score: ", score
+                print "\n Fail! | Score: ", score
             restart = True
             return
     #print "score: ", score
 
-
+#moving
 def call_up(event):
     try_move(0, -1)
 
@@ -112,17 +153,17 @@ def call_left(event):
 def call_right(event):
     try_move(1, 0)
 
-
+#restarting
 def restart_game():
     global player, score, me, restart
-    player = (0, y-1)
+    player = random_start() 
     score = 1
     restart = False
     board.coords(me, player[0]*Width+Width*2/10, player[1]*Width+Width*2/10, player[0]*Width+Width*8/10, player[1]*Width+Width*8/10)
 
 def has_restarted():
     return restart
-
+#binding
 master.bind("<Up>", call_up)
 master.bind("<Down>", call_down)
 master.bind("<Right>", call_right)
@@ -133,7 +174,7 @@ me = board.create_rectangle(player[0]*Width+Width*2/10, player[1]*Width+Width*2/
 
 board.grid(row=0, column=0)
 
-
+#starting
 def start_game():
     master.mainloop()
 
